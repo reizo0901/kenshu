@@ -4,7 +4,7 @@
 msgoutput(){
     echo $1
     datetemp=`date "+%y/%m/%d %H:%M:%S"` 
-    echo $datetemp $1 >> /home/docker/code/result_guest.txt
+    echo $datetemp $1 >> /home/docker/code/result_django.txt
 }
 
 msgoutput "[Inf]Django設定スクリプトを実行します。"
@@ -60,5 +60,4 @@ else
     exit 1
 fi
 msgoutput "[Inf]Django設定スクリプト終了します。"
-msgoutput "[Inf]Script End!"
 exit 0
