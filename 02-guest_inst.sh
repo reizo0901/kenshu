@@ -150,7 +150,7 @@ else
     return 1
 fi
 #Django設定ログを結合
-cat /home/docker/code/result_django.txt  > /home/docker/code/result_guest.txt
+cat /home/docker/code/result_django.txt >> /home/docker/code/result_guest.txt
 
 msgoutput "[Inf]コンテナ内設定スクリプトを終了します。"
 msgoutput "[Inf]Script End!"

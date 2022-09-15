@@ -1,5 +1,6 @@
 #!/bin/bash
 
+echo > /home/docker/code/result_django.txt
 #メッセージ出力用関数
 msgoutput(){
     echo $1
