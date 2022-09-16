@@ -12,7 +12,7 @@ msgoutput(){
 
 clear
 msgoutput "[Inf]研修環境構築スクリプトを開始します。"
-
+#メニューを表示
 echo "過去研修環境を削除してから、新たに研修環境をセットアップします。"
 echo
 echo "1) 研修環境の構築を開始する。"
@@ -103,7 +103,6 @@ else
     msgoutput "[Inf]Dockerイメージはすでに存在しています。"
 fi
 
-#将来的にこの処理は不要になるかもしれません。
 #Dockerイメージ内の環境を外出しするため、仮セットアップを実施
 msgoutput "[Inf]Dockerコンテナをセットアップ後、環境を取り出し削除します。"
 docker run -it -d -p 80:80 --name webapp dockerfiles/django-uwsgi-nginx
@@ -192,10 +191,11 @@ else
     msgoutput "[Err]スクリプト[02-guest_inst.sh]の実行に失敗しました。"
     exit
 fi
-
-echo "スクリプトの終了を待っています。"
+#コンテナ内のスクリプト実行はホストと同期がとれないため、ログに"Script End!"の文字列が出てくるまでループします。
+echo "コンテナ内スクリプトの終了を待っています。"
 tail -n0 --pid=$(($BASHPID+1)) -F ./code/result_guest.txt | sed '/Script End!/q'
-#コンテナ内の実行ログをコンテナ外の実行ログとマージします。
+echo "コンテナ内スクリプトが終了しました。"
+#コンテナ内の実行ログをコンテナ外の実行ログを結合します。
 cat ./code/result_guest.txt >> ./result_host.txt
 
 msgoutput "[Inf]uwsgi.iniをコンテナ内にコピーを開始します。"
