@@ -1,5 +1,6 @@
 #!/bin/bash
 
+#実行ログ初期化
 echo > /home/docker/code/result_django.txt
 #メッセージ出力用関数
 msgoutput(){
@@ -43,7 +44,7 @@ else
 fi
 msgoutput "[Inf][kenshu]プロジェクトの[settngs.py]の修正"
 msgoutput "[Inf]既存のALLOWED_HOSTSをコメントアウト、日本時刻設定、日本語表示設定をします。"
-sed -e "s/^ALLOWED_HOST/#ALLOWED_HOST/" -e "s/UTC/Asia\/Tokyo/" -e "s/en-us/ja/" /home/docker/code/kenshu/kenshu/settings_tmp.py > /home/docker/code/kenshu/kenshu/settings.py
+sed -e "s/^ALLOWED_HOST.*$/ALLOWED_HOSTS = ["\'"*"\'",]/" -e "s/UTC/Asia\/Tokyo/" -e "s/en-us/ja/" /home/docker/code/kenshu/kenshu/settings_tmp.py > /home/docker/code/kenshu/kenshu/settings.py
 if [ $? -eq 0 ]; then
     msgoutput "[Suc]コメントアウト、日本時刻設定、日本語表示設定に成功しました。"
 else
@@ -61,4 +62,6 @@ else
     exit 1
 fi
 msgoutput "[Inf]Django設定スクリプト終了します。"
+#実行ログ改行挿入
+echo > /home/docker/code/result_django.txt
 exit 0
