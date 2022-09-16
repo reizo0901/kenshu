@@ -139,7 +139,7 @@ else
 fi
 
 #プロジェクトをec2-userで作成する。
-
+#ホストのec2-userとゲストのec2-userのgidを同一にすることでパーミッション問題を解決。
 msgoutput "[Inf]スクリプト[03-django_set.sh]を実行します。"
 su - ec2-user -c /home/docker/code/03-django_set.sh
 if [ $? -eq 0 ]; then
@@ -154,3 +154,5 @@ cat /home/docker/code/result_django.txt >> /home/docker/code/result_guest.txt
 
 msgoutput "[Inf]コンテナ内設定スクリプトを終了します。"
 msgoutput "[Inf]Script End!"
+#実行ログ改行挿入
+echo > /home/docker/code/result_guest.txt
