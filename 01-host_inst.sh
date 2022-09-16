@@ -87,7 +87,7 @@ else
 fi
 
 #Dockerイメージダウンロード
-msgout "[Inf]Dockerイメージ[dockerfiles/django-uwsgi-nginx]のダウンロードを開始します。"
+msgoutput "[Inf]Dockerイメージ[dockerfiles/django-uwsgi-nginx]のダウンロードを開始します。"
 docker images | grep dockerfiles/django-uwsgi-nginx
 if [ $? -gt 0 ]; then
     docker pull dockerfiles/django-uwsgi-nginx
