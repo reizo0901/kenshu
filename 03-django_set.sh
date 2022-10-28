@@ -22,16 +22,18 @@ else
     exit 1
 fi
 cd /home/docker/code/kenshu
-msgoutput "[Inf]プロジェクト[kenshu]に[janken]アプリのディレクトリを作成します。"
-python3 manage.py startapp janken
+msgoutput "[Inf]プロジェクト[kenshu]に[app]アプリのディレクトリを作成します。"
+python3 manage.py startapp app
 if [ $? -eq 0 ]; then
-    msgoutput "[Suc][janken]アプリのディレクトリの作成に成功しました。"
+    msgoutput "[Suc][app]アプリのディレクトリの作成に成功しました。"
 else
-    msgoutput "[Err][janken]アプリのディレクトリの作成に失敗しました。"
+    msgoutput "[Err][app]アプリのディレクトリの作成に失敗しました。"
     msgoutput "[Inf]Script End!"
     exit 1
 fi
-
+#staticディレクトリ作成
+mkdir static
+mkdir media
 #kenshuプロジェクトの[settings.py]を修正
 msgoutput "[Inf]settings.pyをsettings_tmp.pyにリネームします。"
 mv /home/docker/code/kenshu/kenshu/settings.py /home/docker/code/kenshu/kenshu/settings_tmp.py
@@ -52,8 +54,8 @@ else
     msgoutput "[Inf]Script End!"
     exit 1
 fi
-msgoutput "[Inf]新しいALLOWED_HOSTSを追記します。"
-echo "ALLOWED_HOSTS = ["\'"*"\'",]" >> /home/docker/code/kenshu/kenshu/settings.py
+msgoutput "[Inf]新しいSTATIC_ROOTを追記します。"
+echo "STATIC_ROOT = str(os.path.join(BASE_DIR,'static'))" >> /home/docker/code/kenshu/kenshu/settings.py
 if [ $? -eq 0 ]; then
     msgoutput "[Suc]追記に成功しました。"
 else
@@ -61,6 +63,12 @@ else
     msgoutput "[Inf]Script End!"
     exit 1
 fi
+#staticディレクトリの統合
+cd /home/docker/code/kenshu
+python3 manage.py collectstatic << "EOF"
+yes
+EOF
+
 msgoutput "[Inf]Django設定スクリプト終了します。"
 #実行ログ改行挿入
 echo > /home/docker/code/result_django.txt

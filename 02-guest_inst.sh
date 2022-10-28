@@ -30,8 +30,28 @@ else
     exit 1
 fi
 
+#[curl]のインストール
+apt-get install -y curl
+if [ $? -eq 0 ]; then
+    msgoutput "[Suc][curl]のインストールに成功しました。"
+else
+    msgoutput "[Err][curl]のインストールに失敗しました。"
+    msgoutput "[Inf]Script End!"
+    exit 1
+fi
+
+#[wget]のインストール
+apt-get install -y wget
+if [ $? -eq 0 ]; then
+    msgoutput "[Suc][wget]のインストールに成功しました。"
+else
+    msgoutput "[Err][wget]のインストールに失敗しました。"
+    msgoutput "[Inf]Script End!"
+    exit 1
+fi
+
 #[sed]のインストール
-apt-get install -y sudo
+apt-get install -y sed
 if [ $? -eq 0 ]; then
     msgoutput "[Suc][sed]のインストールに成功しました。"
 else
@@ -40,15 +60,10 @@ else
     exit 1
 fi
 
-#[visudo]のインストール
-apt-get install -y sudo
-if [ $? -eq 0 ]; then
-    msgoutput "[Suc][visudo]のインストールに成功しました。"
-else
-    msgoutput "[Err][visudo]のインストールに失敗しました。"
-    msgoutput "[Inf]Script End!"
-    exit 1
-fi
+#pipアップグレード
+pip install --upgrade pip
+#Djangoアップグレード
+python3 -m pip install -U Django
 
 #ホストとのpermission問題を解決します。
 msgoutput "ホストとのpermission問題を解決します。"
@@ -156,3 +171,39 @@ msgoutput "[Inf]コンテナ内設定スクリプトを終了します。"
 msgoutput "[Inf]Script End!"
 #実行ログ改行挿入
 echo > /home/docker/code/result_guest.txt
+#Python日本語エンコード対策
+PYTHONIOENCODEING="UTF-8"
+if [ $? -eq 0 ]; then
+    msgoutput "[Suc]Python日本語エンコード対策が成功しました。"
+else
+    msgoutput "[Err]Python日本語エンコード対策が失敗しました。"
+    msgoutput "[Inf]Script End!"
+    exit 1
+fi
+#nginxの[/etc/nginx/sites-available/default]を修正
+#nginxのdefaultに静的コンテンツを設定
+msgoutput "[Inf]defaultをdefault.bkにリネームします。"
+mv /etc/nginx/sites-available/default /etc/nginx/sites-available/default.bk
+if [ $? -eq 0 ]; then
+    msgoutput "[Suc]リネームが成功しました。"
+else
+    msgoutput "[Err]リネームが失敗しました。"
+    msgoutput "[Inf]Script End!"
+    exit 1
+fi
+msgoutput "[Inf]nginxの[etc/nginx/sites-available/default]の修正"
+msgoutput "[Inf]静的コンテンツの静的コンテンツの設定をします。"
+
+sed "s/alias \/home\/docker\/volatile\/static;/alias \/home\/docker\/code\/kenshu\/static;/" /etc/nginx/sites-available/default.bk > /etc/nginx/sites-available/default
+if [ $? -eq 0 ]; then
+    msgoutput "[Suc]静的コンテンツの設定に成功しました。"
+else
+    msgoutput "[Err]静的コンテンツの設定に失敗しました。"
+    msgoutput "[Inf]Script End!"
+    exit 1
+fi
+#uwsgiサービス再起動
+supervisorctl restart app-uwsgi
+
+#nginxサービス再起動
+supervisorctl restart nginx-app
