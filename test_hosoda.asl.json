@@ -1,0 +1,143 @@
+{
+  "Comment": "A description of my state machine",
+  "StartAt": "DynamoDB GetItem",
+  "States": {
+    "DynamoDB GetItem": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::aws-sdk:dynamodb:getItem",
+      "Arguments": {
+        "TableName": "Article",
+        "Key": {
+          "ArticleID": {
+            "S": "{% $states.input.ArticleID %}"
+          }
+        }
+      },
+      "Next": "Choice - Item is present"
+    },
+    "Choice - Item is present": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Condition": "{% $exists($states.input.Item) %}",
+          "Next": "Parallel"
+        }
+      ],
+      "Default": "Fail"
+    },
+    "Parallel": {
+      "Type": "Parallel",
+      "End": true,
+      "Branches": [
+        {
+          "StartAt": "TranslateText",
+          "States": {
+            "TranslateText": {
+              "Type": "Task",
+              "Arguments": {
+                "SourceLanguageCode": "ja",
+                "TargetLanguageCode": "en",
+                "Text": "{% $states.input.Item.detail.S %}"
+              },
+              "Resource": "arn:aws:states:::aws-sdk:translate:translateText",
+              "Next": "DynamoDB UpdateItem - EnglishVersion",
+              "Output": {
+                "Item": "{% $states. input. Item %}",
+                "Result": "{% $states. result %}"
+              }
+            },
+            "DynamoDB UpdateItem - EnglishVersion": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::dynamodb:updateItem",
+              "Arguments": {
+                "TableName": "Article",
+                "Key": {
+                  "ArticleID": {
+                    "S": "{% $states.input.Item.ArticleID.S %}"
+                  }
+                },
+                "UpdateExpression": "SET EnglishVersion = :EnglishVersionRef",
+                "ExpressionAttributeValues": {
+                  ":EnglishVersionRef": {
+                    "S": "{% $states.input.Result.TranslatedText %}"
+                  }
+                }
+              },
+              "End": true
+            }
+          }
+        },
+        {
+          "StartAt": "StartSpeechSynthesisTask",
+          "States": {
+            "StartSpeechSynthesisTask": {
+              "Type": "Task",
+              "Arguments": {
+                "OutputFormat": "mp3",
+                "OutputS3BucketName": "reizohosoda-s3",
+                "Text": "{% $states.input.Item.detail.S %}",
+                "VoiceId": "Mizuki"
+              },
+              "Resource": "arn:aws:states:::aws-sdk:polly:startSpeechSynthesisTask",
+              "Next": "GetSpeechSynthesisTask",
+              "Output": {
+                "Item": "{% $states.input.Item %}",
+                "Result": "{% $states.result %}"
+              }
+            },
+            "GetSpeechSynthesisTask": {
+              "Type": "Task",
+              "Arguments": {
+                "TaskId": "{%$states.input.Result.SynthesisTask.TaskId %}"
+              },
+              "Resource": "arn:aws:states:::aws-sdk:polly:getSpeechSynthesisTask",
+              "Output": {
+                "Item": "{% $states.input.Item %}",
+                "Result": "{% $states.result %}"
+              },
+              "Next": "Choice - Task is completed"
+            },
+            "Choice - Task is completed": {
+              "Type": "Choice",
+              "Choices": [
+                {
+                  "Next": "DynamoDB UpdateItem savemp3",
+                  "Condition": "{% ($states.input.Result.SynthesisTask.TaskStatus) = (\"completed\") %}"
+                }
+              ],
+              "Default": "Wait"
+            },
+            "DynamoDB UpdateItem savemp3": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::dynamodb:updateItem",
+              "Arguments": {
+                "TableName": "Article",
+                "Key": {
+                  "ArticleId": {
+                    "S": "{% $states.input.Item.ArticleId.S %}"
+                  }
+                },
+                "UpdateExpression": "SET S3URL = :S3URLRef",
+                "ExpressionAttributeValues": {
+                  ":S3URLRef": {
+                    "S": "{% $states.input.Result.SynthesisTask.OutputUri %}"
+                  }
+                }
+              },
+              "End": true
+            },
+            "Wait": {
+              "Type": "Wait",
+              "Seconds": 5,
+              "Next": "GetSpeechSynthesisTask"
+            }
+          }
+        }
+      ]
+    },
+    "Fail": {
+      "Type": "Fail"
+    }
+  },
+  "QueryLanguage": "JSONata"
+}
